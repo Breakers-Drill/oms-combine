@@ -1,0 +1,7 @@
+# Ignore node modules in subdirectories
+engine/node_modules/
+engine/dist/
+engine/.env
+showcase/node_modules/
+showcase/dist/
+showcase/.env
