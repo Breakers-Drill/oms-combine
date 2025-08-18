@@ -36,15 +36,24 @@ describe('AppController (e2e)', () => {
 
     const createResponse = await request(app.getHttpServer())
       .post('/api/microservices')
-      .send(createDto)
-      .expect(201);
+      .send(createDto);
+
+    if (createResponse.status !== 201) {
+      console.error('Error response body:', createResponse.body);
+    }
+    expect(createResponse.status).toBe(201);
+
 
     const microservice = createResponse.body;
     expect(microservice.id).toBeDefined();
 
-    return request(app.getHttpServer())
-      .post(`/api/microservices/${microservice.id}/deploy`)
-      .expect(201);
+    const deployResponse = await request(app.getHttpServer())
+      .post(`/api/microservices/${microservice.id}/deploy`);
+
+    if (deployResponse.status !== 201) {
+      console.error('Error response body:', deployResponse.body);
+    }
+    expect(deployResponse.status).toBe(201);
   }, 30000);
 
   afterAll(async () => {

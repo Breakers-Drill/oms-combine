@@ -9,7 +9,7 @@ export class FileSystemService {
 
   constructor() {
     // Определяем корень проекта server относительно текущего файла
-    this.projectRoot = path.resolve(__dirname, '..', '..');
+    this.projectRoot = path.resolve(__dirname, '..', '..', '..');
     this.logger.log(`Project root resolved to: ${this.projectRoot}`);
   }
 
