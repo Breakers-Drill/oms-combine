@@ -105,7 +105,7 @@ export class FileSystemService {
   }
 
   async copyFile(source: string, destination: string): Promise<void> {
-    await this.ensureDirectoryExists(dirname(destination));
+    await this.ensureDirectoryExists(path.dirname(destination));
     await fs.copyFile(source, destination);
   }
 }
