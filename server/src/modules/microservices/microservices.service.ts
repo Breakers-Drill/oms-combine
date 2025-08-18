@@ -155,6 +155,11 @@ export class MicroservicesService {
     }
   }
 
+  async getAvailableBranches(serviceName: string): Promise<string[]> {
+    const serviceDir = await this.fileSystemService.getServiceDirectory(serviceName);
+    return this.gitService.getBranches(serviceDir);
+  }
+
   async deployMicroservice(serviceName: string): Promise<void> {
     try {
       const serviceDir = await this.fileSystemService.getServiceDirectory(serviceName);

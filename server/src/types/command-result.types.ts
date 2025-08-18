@@ -27,9 +27,7 @@ export interface LogEntry {
 }
 
 export interface DetailedError {
-  step: string;           // На каком этапе произошла ошибка
-  command: string;        // Какая команда не выполнилась
-  error: string;          // Текст ошибки
-  recommendations: string[]; // Что нужно исправить
-  nextAction?: string;    // Следующий шаг после исправления
+  step: string;
+  command: string;
+  error: string;
 }

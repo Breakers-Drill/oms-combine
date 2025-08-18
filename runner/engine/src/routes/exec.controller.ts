@@ -1,4 +1,4 @@
-import { Controller, Query, Sse, Logger } from '@nestjs/common';
+import { Controller, Query, Sse, Logger, Get } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ExecService } from '../services/exec.service.js';
@@ -17,6 +17,11 @@ type MessageEventData =
 export class ExecController {
   private readonly logger = new Logger(ExecController.name);
   constructor(private readonly execService: ExecService) { }
+
+  @Get('ping')
+  ping() {
+    return { status: 'ok' };
+  }
 
   @Sse()
   exec(

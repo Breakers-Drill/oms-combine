@@ -1,12 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { promises as fs } from 'fs';
-import { join, dirname } from 'path';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 @Injectable()
 export class FileSystemService {
   private readonly logger = new Logger(FileSystemService.name);
+  private readonly projectRoot: string;
 
-  constructor() { }
+  constructor() {
+    // Определяем корень проекта server относительно текущего файла
+    this.projectRoot = path.resolve(__dirname, '..', '..');
+    this.logger.log(`Project root resolved to: ${this.projectRoot}`);
+  }
+
+  private resolvePath(relativePath: string): string {
+    return path.resolve(this.projectRoot, relativePath);
+  }
 
   async ensureDirectoryExists(path: string): Promise<void> {
     try {
@@ -18,37 +27,46 @@ export class FileSystemService {
   }
 
   async getServiceDirectory(serviceName: string): Promise<string> {
-    const dataDir = process.env.DATA_DIR;
-    const serviceDir = join(dataDir, serviceName);
-    await this.ensureDirectoryExists(serviceDir);
-    return serviceDir;
+    const dataDir = process.env.DATA_DIR || 'data';
+    const absoluteDataDir = this.resolvePath(dataDir);
+    await this.ensureDirectoryExists(absoluteDataDir);
+    return path.join(absoluteDataDir, serviceName);
   }
 
-  async directoryExists(path: string): Promise<boolean> {
+  async directoryExists(dirPath: string): Promise<boolean> {
     try {
-      const stat = await fs.stat(path);
-      return stat.isDirectory();
+      const stats = await fs.stat(dirPath);
+      return stats.isDirectory();
     } catch {
       return false;
     }
   }
 
-  async fileExists(path: string): Promise<boolean> {
+  async fileExists(filePath: string): Promise<boolean> {
     try {
-      const stat = await fs.stat(path);
-      return stat.isFile();
+      await fs.access(filePath);
+      return true;
     } catch {
       return false;
     }
   }
 
-  async readFile(path: string): Promise<string> {
-    return fs.readFile(path, 'utf-8');
+  async readFile(filePath: string): Promise<string> {
+    try {
+      return await fs.readFile(filePath, 'utf-8');
+    } catch (error) {
+      this.logger.error(`Failed to read file ${filePath}:`, error);
+      throw error;
+    }
   }
 
-  async writeFile(path: string, content: string): Promise<void> {
-    await this.ensureDirectoryExists(dirname(path));
-    await fs.writeFile(path, content, 'utf-8');
+  async writeFile(filePath: string, content: string): Promise<void> {
+    try {
+      await fs.writeFile(filePath, content, 'utf-8');
+    } catch (error) {
+      this.logger.error(`Failed to write file ${filePath}:`, error);
+      throw error;
+    }
   }
 
   async readJsonFile<T>(path: string): Promise<T> {
@@ -61,15 +79,29 @@ export class FileSystemService {
     await this.writeFile(path, content);
   }
 
-  async listDirectories(path: string): Promise<string[]> {
-    const entries = await fs.readdir(path, { withFileTypes: true });
-    return entries
-      .filter(entry => entry.isDirectory())
-      .map(entry => entry.name);
+  async listDirectories(dirPath: string): Promise<string[]> {
+    try {
+      const absolutePath = this.resolvePath(dirPath);
+      const entries = await fs.readdir(absolutePath, { withFileTypes: true });
+      return entries
+        .filter(entry => entry.isDirectory())
+        .map(entry => entry.name);
+    } catch (error) {
+      this.logger.error(`Failed to list directories in ${dirPath}:`, error);
+      if (error.code === 'ENOENT') {
+        return [];
+      }
+      throw error;
+    }
   }
 
-  async removeDirectory(path: string): Promise<void> {
-    await fs.rm(path, { recursive: true, force: true });
+  async removeDirectory(dirPath: string): Promise<void> {
+    try {
+      await fs.rm(dirPath, { recursive: true, force: true });
+    } catch (error) {
+      this.logger.error(`Failed to remove directory ${dirPath}:`, error);
+      throw error;
+    }
   }
 
   async copyFile(source: string, destination: string): Promise<void> {

@@ -13,11 +13,8 @@ export class GitService {
     const result = await this.runnerService.executeCommand(command, {}, serviceId);
 
     if (!result.success) {
-      throw this.createDetailedError('git_clone', command, result.error || 'Unknown error', [
-        'Проверьте права доступа к репозиторию',
-        'Убедитесь что репозиторий публичный или настроен SSH ключ',
-        'Попробуйте использовать SSH URL вместо HTTPS',
-      ], 'Исправьте URL репозитория и попробуйте снова');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('git_clone', command, errorDetails || result.error || 'Unknown error');
     }
   }
 
@@ -26,10 +23,8 @@ export class GitService {
     const result = await this.runnerService.executeCommand(command, { cwd: directory }, serviceId);
 
     if (!result.success) {
-      throw this.createDetailedError('git_checkout', command, result.error || 'Unknown error', [
-        'Проверьте что ветка существует в репозитории',
-        'Убедитесь что репозиторий был успешно склонирован',
-      ], 'Проверьте название ветки и попробуйте снова');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('git_checkout', command, errorDetails || result.error || 'Unknown error');
     }
   }
 
@@ -38,11 +33,8 @@ export class GitService {
     const result = await this.runnerService.executeCommand(command, { cwd: directory }, serviceId);
 
     if (!result.success) {
-      throw this.createDetailedError('git_pull', command, result.error || 'Unknown error', [
-        'Проверьте подключение к интернету',
-        'Убедитесь что нет конфликтов в локальных изменениях',
-        'Попробуйте выполнить git fetch перед pull',
-      ], 'Исправьте проблемы с Git и попробуйте снова');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('git_pull', command, errorDetails || result.error || 'Unknown error');
     }
   }
 
@@ -51,11 +43,8 @@ export class GitService {
     const result = await this.runnerService.executeCommand(command);
 
     if (!result.success) {
-      throw this.createDetailedError('git_branches', command, result.error || 'Unknown error', [
-        'Проверьте доступность репозитория',
-        'Убедитесь что URL репозитория корректный',
-        'Проверьте права доступа к репозиторию',
-      ], 'Исправьте URL репозитория и попробуйте снова');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('git_branches', command, errorDetails || result.error || 'Unknown error');
     }
 
     // Парсим вывод git ls-remote --heads
@@ -131,15 +120,12 @@ export class GitService {
     step: string,
     command: string,
     error: string,
-    recommendations: string[],
-    nextAction?: string,
-  ): DetailedError {
-    return {
+  ): Error {
+    const detailedError: DetailedError = {
       step,
       command,
       error,
-      recommendations,
-      nextAction,
     };
+    return new Error(JSON.stringify(detailedError, null, 2));
   }
 }

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { LogsService } from '../modules/logs/logs.service';
 import type { CommandResult, CommandOptions } from '../types/command-result.types';
+import { EventSource }  from 'eventsource';
 
 @Injectable()
 export class RunnerService {
@@ -10,11 +11,26 @@ export class RunnerService {
     private readonly logsService: LogsService,
   ) { }
 
+  private async checkRunnerAvailability(): Promise<void> {
+    const runnerUrl = process.env.RUNNER_ENGINE_URL;
+    try {
+      const response = await fetch(`${runnerUrl}/api/exec/ping`);
+      if (!response.ok) {
+        throw new Error(`Runner service is not available. Status: ${response.status}`);
+      }
+    } catch (error) {
+      this.logger.error('Runner service is not available', error);
+      throw new Error('Runner service is not available');
+    }
+  }
+
   async executeCommand(
     command: string,
     options: CommandOptions = {},
     serviceId?: string,
   ): Promise<CommandResult> {
+
+    await this.checkRunnerAvailability();
     const startTime = Date.now();
     const runnerUrl = process.env.RUNNER_ENGINE_URL;
 

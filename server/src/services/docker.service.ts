@@ -16,10 +16,8 @@ export class DockerService {
     const result = await this.runnerService.executeCommand(command);
 
     if (!result.success) {
-      throw this.createDetailedError('docker_ps', command, result.error || 'Unknown error', [
-        'Проверьте что Docker запущен',
-        'Убедитесь что у вас есть права для выполнения docker команд',
-      ], 'Запустите Docker и попробуйте снова');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('docker_ps', command, errorDetails || result.error || 'Unknown error');
     }
 
     const containers: ContainerInfo[] = [];
@@ -52,12 +50,8 @@ export class DockerService {
     const result = await this.runnerService.executeCommand(command, { cwd: directory }, serviceId);
 
     if (!result.success) {
-      throw this.createDetailedError('docker_compose_up', command, result.error || 'Unknown error', [
-        'Проверьте что docker-compose.yaml файл существует',
-        'Убедитесь что .env файл содержит все необходимые переменные',
-        'Проверьте что Docker запущен',
-        'Убедитесь что порты не заняты другими сервисами',
-      ], 'Исправьте конфигурацию и попробуйте снова');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('docker_compose_up', command, errorDetails || result.error || 'Unknown error');
     }
   }
 
@@ -66,10 +60,8 @@ export class DockerService {
     const result = await this.runnerService.executeCommand(command, { cwd: directory }, serviceId);
 
     if (!result.success) {
-      throw this.createDetailedError('docker_compose_down', command, result.error || 'Unknown error', [
-        'Проверьте что Docker запущен',
-        'Убедитесь что контейнеры существуют',
-      ], 'Попробуйте остановить контейнеры вручную');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('docker_compose_down', command, errorDetails || result.error || 'Unknown error');
     }
   }
 
@@ -78,10 +70,8 @@ export class DockerService {
     const result = await this.runnerService.executeCommand(command, {}, serviceId);
 
     if (!result.success) {
-      throw this.createDetailedError('docker_rm', command, result.error || 'Unknown error', [
-        'Проверьте что контейнер существует',
-        'Убедитесь что у вас есть права для удаления контейнеров',
-      ], 'Попробуйте удалить контейнер вручную');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('docker_rm', command, errorDetails || result.error || 'Unknown error');
     }
   }
 
@@ -90,10 +80,8 @@ export class DockerService {
     const result = await this.runnerService.executeCommand(command, {}, serviceId);
 
     if (!result.success) {
-      throw this.createDetailedError('docker_inspect', command, result.error || 'Unknown error', [
-        'Проверьте что контейнер существует',
-        'Убедитесь что имя контейнера корректное',
-      ], 'Проверьте имя контейнера и попробуйте снова');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('docker_inspect', command, errorDetails || result.error || 'Unknown error');
     }
 
     try {
@@ -108,10 +96,8 @@ export class DockerService {
     const result = await this.runnerService.executeCommand(command, {}, serviceId);
 
     if (!result.success) {
-      throw this.createDetailedError('docker_logs', command, result.error || 'Unknown error', [
-        'Проверьте что контейнер существует',
-        'Убедитесь что контейнер запущен',
-      ], 'Проверьте статус контейнера и попробуйте снова');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('docker_logs', command, errorDetails || result.error || 'Unknown error');
     }
 
     return result.output;
@@ -122,10 +108,8 @@ export class DockerService {
     const result = await this.runnerService.executeCommand(command);
 
     if (!result.success) {
-      throw this.createDetailedError('docker_networks', command, result.error || 'Unknown error', [
-        'Проверьте что Docker запущен',
-        'Убедитесь что у вас есть права для выполнения docker команд',
-      ], 'Запустите Docker и попробуйте снова');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('docker_networks', command, errorDetails || result.error || 'Unknown error');
     }
 
     return result.output.filter(line => line.trim());
@@ -136,10 +120,8 @@ export class DockerService {
     const result = await this.runnerService.executeCommand(command);
 
     if (!result.success) {
-      throw this.createDetailedError('docker_volumes', command, result.error || 'Unknown error', [
-        'Проверьте что Docker запущен',
-        'Убедитесь что у вас есть права для выполнения docker команд',
-      ], 'Запустите Docker и попробуйте снова');
+      const errorDetails = result.output.join('\n');
+      throw this.createDetailedError('docker_volumes', command, errorDetails || result.error || 'Unknown error');
     }
 
     return result.output.filter(line => line.trim());
@@ -149,15 +131,12 @@ export class DockerService {
     step: string,
     command: string,
     error: string,
-    recommendations: string[],
-    nextAction?: string,
-  ): DetailedError {
-    return {
+  ): Error {
+    const detailedError: DetailedError = {
       step,
       command,
       error,
-      recommendations,
-      nextAction,
     };
+    return new Error(JSON.stringify(detailedError, null, 2));
   }
 }
