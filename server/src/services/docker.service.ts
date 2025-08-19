@@ -56,7 +56,7 @@ export class DockerService {
   }
 
   async composeDown(directory: string, serviceId?: string): Promise<void> {
-    const command = 'docker compose down';
+    const command = 'docker compose down --volumes --rmi all';
     const result = await this.runnerService.executeCommand(command, { cwd: directory }, serviceId);
 
     if (!result.success) {

@@ -211,20 +211,12 @@ export class MicroservicesService {
 
   async deleteMicroservice(serviceName: string): Promise<void> {
     try {
-      // Останавливаем контейнеры если они запущены
-      const status = await this.dockerService.getContainerStatus(serviceName);
-      if (status === 'running') {
-        await this.stopMicroservice(serviceName);
-      }
+      const serviceDir = await this.fileSystemService.getServiceDirectory(serviceName);
 
-      // Удаляем контейнеры
-      const containers = await this.dockerService.getContainers(serviceName);
-      for (const container of containers) {
-        await this.dockerService.removeContainer(container.name, serviceName);
-      }
+      // Останавливаем и удаляем контейнеры, сети и volumes
+      await this.dockerService.composeDown(serviceDir, serviceName);
 
       // Удаляем директорию
-      const serviceDir = await this.fileSystemService.getServiceDirectory(serviceName);
       await this.fileSystemService.removeDirectory(serviceDir);
 
       await this.logsService.addLog({
